@@ -29,8 +29,8 @@ const mapDispatchToProps = dispatch => ({
 
 class Home extends React.Component {
   componentWillMount() {
-    const tab = this.props.token ? 'feed' : 'all';
-    const articlesPromise = this.props.token ?
+    const tab = this.props.token && false? 'feed' : 'all';
+    const articlesPromise = this.props.token && false ?
       agent.Articles.feed :
       agent.Articles.all;
 

@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import ListErrors from './ListErrors';
 import React from 'react';
-import agent from '../agent';
 import { connect } from 'react-redux';
 import {
   UPDATE_FIELD_AUTH,
   LOGIN,
   LOGIN_PAGE_UNLOADED
 } from '../constants/actionTypes';
+import cognito from "../cognito";
 
 const mapStateToProps = state => ({ ...state.auth });
 
@@ -16,8 +16,26 @@ const mapDispatchToProps = dispatch => ({
     dispatch({ type: UPDATE_FIELD_AUTH, key: 'email', value }),
   onChangePassword: value =>
     dispatch({ type: UPDATE_FIELD_AUTH, key: 'password', value }),
-  onSubmit: (email, password) =>
-    dispatch({ type: LOGIN, payload: agent.Auth.login(email, password) }),
+  onSubmit: (email, password) => {
+    const callback = {
+      error: (err) => {
+        console.error(err);
+        var payload = {
+          errors: {message: err.message}
+        };
+
+        dispatch({ type: LOGIN, payload: payload, error: true});
+      },
+      success: (result) => {
+        console.log('logged user: ', result);
+        const payload = {
+          user: result.getIdToken().payload
+        };
+        dispatch({ type: LOGIN, payload: payload });
+      }
+    };
+    cognito.authenticateUser(email, password, callback);
+  },
   onUnload: () =>
     dispatch({ type: LOGIN_PAGE_UNLOADED })
 });

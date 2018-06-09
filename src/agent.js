@@ -10,7 +10,7 @@ const responseBody = res => res.body;
 
 let token = null;
 const tokenPlugin = req => {
-  if (token) {
+  if (token && false) {
     req.set('authorization', `Token ${token}`);
   }
 }
@@ -28,7 +28,7 @@ const requests = {
 
 const Auth = {
   current: () =>
-    requests.get('/user'),
+    requests.get('/User'),
   login: (email, password) =>
     requests.post('/users/login', { user: { email, password } }),
   register: (username, email, password) =>

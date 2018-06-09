@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import ListErrors from './ListErrors';
 import React from 'react';
-import agent from '../agent';
 import { connect } from 'react-redux';
 import {
   UPDATE_FIELD_AUTH,
-  REGISTER,
+  REDIRECT,
   REGISTER_PAGE_UNLOADED
 } from '../constants/actionTypes';
+import cognito from "../cognito";
 
 const mapStateToProps = state => ({ ...state.auth });
 
@@ -19,8 +19,14 @@ const mapDispatchToProps = dispatch => ({
   onChangeUsername: value =>
     dispatch({ type: UPDATE_FIELD_AUTH, key: 'username', value }),
   onSubmit: (username, email, password) => {
-    const payload = agent.Auth.register(username, email, password);
-    dispatch({ type: REGISTER, payload })
+    var callback = {
+      error: (err) => {console.log(err)},
+      success: (result) => {
+        console.log(result);
+        dispatch({ type: REDIRECT })
+      }
+    };
+    cognito.signUp(email, username, password, callback);
   },
   onUnload: () =>
     dispatch({ type: REGISTER_PAGE_UNLOADED })

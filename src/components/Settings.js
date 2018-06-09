@@ -7,6 +7,7 @@ import {
   SETTINGS_PAGE_UNLOADED,
   LOGOUT
 } from '../constants/actionTypes';
+import cognito from "../cognito";
 
 class SettingsForm extends React.Component {
   constructor() {
@@ -42,7 +43,7 @@ class SettingsForm extends React.Component {
     if (this.props.currentUser) {
       Object.assign(this.state, {
         image: this.props.currentUser.image || '',
-        username: this.props.currentUser.username,
+        username: this.props.currentUser.name,
         bio: this.props.currentUser.bio,
         email: this.props.currentUser.email
       });
@@ -53,7 +54,7 @@ class SettingsForm extends React.Component {
     if (nextProps.currentUser) {
       this.setState(Object.assign({}, this.state, {
         image: nextProps.currentUser.image || '',
-        username: nextProps.currentUser.username,
+        username: nextProps.currentUser.name,
         bio: nextProps.currentUser.bio,
         email: nextProps.currentUser.email
       }));
@@ -130,7 +131,10 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  onClickLogout: () => dispatch({ type: LOGOUT }),
+  onClickLogout: () =>   {
+    cognito.getCurrentUser().signOut();
+    dispatch({ type: LOGOUT })
+  },
   onSubmitForm: user =>
     dispatch({ type: SETTINGS_SAVED, payload: agent.Auth.save(user) }),
   onUnload: () => dispatch({ type: SETTINGS_PAGE_UNLOADED })

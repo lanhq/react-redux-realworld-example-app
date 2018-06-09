@@ -1,4 +1,3 @@
-import agent from '../agent';
 import Header from './Header';
 import React from 'react';
 import { connect } from 'react-redux';
@@ -14,6 +13,7 @@ import Register from '../components/Register';
 import Settings from '../components/Settings';
 import { store } from '../store';
 import { push } from 'react-router-redux';
+import cognito from "../cognito";
 
 const mapStateToProps = state => {
   return {
@@ -24,8 +24,8 @@ const mapStateToProps = state => {
   }};
 
 const mapDispatchToProps = dispatch => ({
-  onLoad: (payload, token) =>
-    dispatch({ type: APP_LOAD, payload, token, skipTracking: true }),
+  onLoad: (payload) =>
+    dispatch({ type: APP_LOAD, payload: {user: payload}, skipTracking: true }),
   onRedirect: () =>
     dispatch({ type: REDIRECT })
 });
@@ -40,12 +40,32 @@ class App extends React.Component {
   }
 
   componentWillMount() {
-    const token = window.localStorage.getItem('jwt');
-    if (token) {
-      agent.setToken(token);
-    }
+    // const token = window.localStorage.getItem('jwt');
+    // if (token && false) {
+    //   agent.setToken(token);
+    // }
+    // cognito.getUserData(function (err, result) {
+    //   if (err) {
+    //     console.error(err);
+    //     this.props.onLoad(err);
+    //   } else {
+    //     this.props.onLoad(result);
+    //   }
+    // }.bind(this))
 
-    this.props.onLoad(token ? agent.Auth.current() : null, token);
+    const currentUser = cognito.getCurrentUser();
+    if (currentUser) {
+      currentUser.getSession(function (err, session) {
+        console.log(session);
+        if (err) {
+          this.props.onLoad(null);
+        } else {
+          this.props.onLoad(session.getIdToken().payload);
+        }
+      }.bind(this));
+    } else {
+      this.props.onLoad(null);
+    }
   }
 
   render() {

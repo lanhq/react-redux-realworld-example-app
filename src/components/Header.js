@@ -32,6 +32,7 @@ const LoggedOutView = props => {
 
 const LoggedInView = props => {
   if (props.currentUser) {
+    const currentUser = props.currentUser;
     return (
       <ul className="nav navbar-nav pull-xs-right">
 
@@ -55,10 +56,10 @@ const LoggedInView = props => {
 
         <li className="nav-item">
           <Link
-            to={`/@${props.currentUser.username}`}
+            to={`/@${currentUser.name}`}
             className="nav-link">
-            <img src={props.currentUser.image} className="user-pic" alt={props.currentUser.username} />
-            {props.currentUser.username}
+            <img src={currentUser.image} className="user-pic" alt={currentUser.name} />
+            {currentUser.name}
           </Link>
         </li>
 

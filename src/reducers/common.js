@@ -28,7 +28,6 @@ export default (state = defaultState, action) => {
     case APP_LOAD:
       return {
         ...state,
-        token: action.token || null,
         appLoaded: true,
         currentUser: action.payload ? action.payload.user : null
       };
@@ -50,7 +49,7 @@ export default (state = defaultState, action) => {
       return {
         ...state,
         redirectTo: action.error ? null : '/',
-        token: action.error ? null : action.payload.user.token,
+        token: action.error ? null : action.payload.token,
         currentUser: action.error ? null : action.payload.user
       };
     case DELETE_ARTICLE:
