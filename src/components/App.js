@@ -60,6 +60,7 @@ class App extends React.Component {
         if (err) {
           this.props.onLoad(null);
         } else {
+          cognito.initCredentials();
           this.props.onLoad(session.getIdToken().payload);
         }
       }.bind(this));

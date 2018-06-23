@@ -10,9 +10,11 @@ import {
   EDITOR_PAGE_UNLOADED,
   UPDATE_FIELD_EDITOR
 } from '../constants/actionTypes';
+import AWS from "aws-sdk";
 
 const mapStateToProps = state => ({
-  ...state.editor
+  ...state.editor,
+  currentUser: state.common.currentUser
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -40,6 +42,8 @@ class Editor extends React.Component {
     this.changeDescription = updateFieldEvent('description');
     this.changeBody = updateFieldEvent('body');
     this.changeTagInput = updateFieldEvent('tagInput');
+    this.updateArticle = this.updateArticle.bind(this);
+    this.createArticle = this.createArticle.bind(this);
 
     this.watchForEnter = ev => {
       if (ev.keyCode === 13) {
@@ -55,34 +59,100 @@ class Editor extends React.Component {
     this.submitForm = ev => {
       ev.preventDefault();
       const article = {
+        id: this.props.id || (new Date()).getTime(),
         title: this.props.title,
         description: this.props.description,
         body: this.props.body,
         tagList: this.props.tagList
       };
 
-      const slug = { slug: this.props.articleSlug };
-      const promise = this.props.articleSlug ?
-        agent.Articles.update(Object.assign(article, slug)) :
-        agent.Articles.create(article);
+      const callback = (err, result) => {
+          if(err) {
+            console.error('create or update article failed: ', err);
+            this.props.onSubmit({errors: err});
+          } else {
+            this.props.onSubmit({article: article});
+          }
+      };
 
-      this.props.onSubmit(promise);
+      if (this.props.id) {
+        this.updateArticle(article, callback);
+      } else {
+        this.createArticle(article, callback);
+      }
     };
   }
 
+  updateArticle(article, callback) {
+    article.author = this.props.currentUser;
+    article.author.image = "https://static.productionready.io/images/smiley-cyrus.jpg";
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    var params = {
+        TableName : "Articles2",
+        Item: article
+    };
+
+    docClient.update(params, callback);
+  }
+
+  createArticle(article, callback) {
+    article.author = this.props.currentUser;
+    article.author.image = "https://static.productionready.io/images/smiley-cyrus.jpg";
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    var params = {
+        TableName : "Articles2",
+        Item: article
+    };
+
+    docClient.put(params, callback);
+  }
+
+  loadArticle(id) {
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    var params = {
+        TableName: 'Articles2',
+        Key:{
+            "id": id
+        }
+    };
+    const callback = (err, result) => {
+      if (err) {
+        this.props.onLoad({
+          errors: err
+        });
+      } else {
+        this.props.onLoad({
+          article: result
+        });
+      }
+    };
+    docClient.get(params, callback);
+  }
+
   componentWillReceiveProps(nextProps) {
-    if (this.props.match.params.slug !== nextProps.match.params.slug) {
-      if (nextProps.match.params.slug) {
+    if (this.props.match.params.id !== nextProps.match.params.id) {
+      if (nextProps.match.params.id) {
         this.props.onUnload();
-        return this.props.onLoad(agent.Articles.get(this.props.match.params.slug));
+        
+        this.loadArticle(
+          this.props.match.params.id
+        );
+        return;
       }
       this.props.onLoad(null);
     }
   }
 
   componentWillMount() {
-    if (this.props.match.params.slug) {
-      return this.props.onLoad(agent.Articles.get(this.props.match.params.slug));
+    if (this.props.match.params.id) {
+      this.loadArticle(
+        this.props.match.params.id,
+        this.props.match.params.title
+      );
+      return this.props.onLoad(agent.Articles.get(this.props.match.params.id));
     }
     this.props.onLoad(null);
   }

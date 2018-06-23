@@ -1,5 +1,5 @@
 import React from 'react';
-import agent from '../../agent';
+import AWS from "aws-sdk";
 
 const Tags = props => {
   const tags = props.tags;
@@ -10,8 +10,19 @@ const Tags = props => {
           tags.map(tag => {
             const handleClick = ev => {
               ev.preventDefault();
-              // props.onClickTag(tag, page => agent.Articles.byTag(tag, page), agent.Articles.byTag(tag));
-              props.onClickTag(tag, agent.Articles.all, agent.Articles.all());
+              const docClient = new AWS.DynamoDB.DocumentClient();
+              docClient.scan({
+                  TableName : "Articles2"
+              }, function (err, data) {
+                if (err) {
+                  console.error(err);
+                } else {
+                  props.onClickTag(tag, null, {
+                    articles: data.Items,
+                    articlesCount: data.Items.length
+                  });
+                }
+              })
             };
 
             return (

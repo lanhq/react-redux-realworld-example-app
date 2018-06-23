@@ -1,13 +1,14 @@
 import ArticleMeta from './ArticleMeta';
 import CommentContainer from './CommentContainer';
 import React from 'react';
-import agent from '../../agent';
 import { connect } from 'react-redux';
 import marked from 'marked';
 import { ARTICLE_PAGE_LOADED, ARTICLE_PAGE_UNLOADED } from '../../constants/actionTypes';
+import AWS from "aws-sdk";
 
 const mapStateToProps = state => ({
   ...state.article,
+  author: state.common.currentUser,
   currentUser: state.common.currentUser
 });
 
@@ -20,10 +21,26 @@ const mapDispatchToProps = dispatch => ({
 
 class Article extends React.Component {
   componentWillMount() {
-    this.props.onLoad(Promise.all([
-      agent.Articles.get(this.props.match.params.id),
-      agent.Comments.forArticle(this.props.match.params.id)
-    ]));
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    var params = {
+        TableName: 'Articles2',
+        Key:{
+            "id": parseInt(this.props.match.params.id, 10)
+        }
+    };
+    const callback = (err, result) => {
+      if (err) {
+        this.props.onLoad({
+          errors: err
+        });
+      } else {
+        this.props.onLoad({
+          article: result
+        });
+      }
+    };
+    docClient.get(params, callback);
   }
 
   componentWillUnmount() {
@@ -35,9 +52,8 @@ class Article extends React.Component {
       return null;
     }
 
-    const markup = { __html: marked(this.props.article.body, { sanitize: true }) };
-    const canModify = this.props.currentUser &&
-      this.props.currentUser.username === this.props.article.author.username;
+    const markup = { __html: marked(this.props.article.body || '', { sanitize: true }) };
+    const canModify = false;
     return (
       <div className="article-page">
 
@@ -61,7 +77,7 @@ class Article extends React.Component {
 
               <ul className="tag-list">
                 {
-                  this.props.article.tagList.map(tag => {
+                  this.props.article && (this.props.article.tagList || []).map(tag => {
                     return (
                       <li
                         className="tag-default tag-pill tag-outline"

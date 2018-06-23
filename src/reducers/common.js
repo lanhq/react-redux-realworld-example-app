@@ -19,7 +19,6 @@ import {
 
 const defaultState = {
   appName: 'Conduit',
-  token: null,
   viewChangeCounter: 0
 };
 
@@ -34,9 +33,9 @@ export default (state = defaultState, action) => {
     case REDIRECT:
       return { ...state, redirectTo: null };
     case LOGOUT:
-      return { ...state, redirectTo: '/', token: null, currentUser: null };
+      return { ...state, redirectTo: '/', currentUser: null };
     case ARTICLE_SUBMITTED:
-      const redirectUrl = `/article/${action.payload.article.slug}`;
+      const redirectUrl = `/article/${action.payload.article.id}`;
       return { ...state, redirectTo: redirectUrl };
     case SETTINGS_SAVED:
       return {
@@ -49,7 +48,6 @@ export default (state = defaultState, action) => {
       return {
         ...state,
         redirectTo: action.error ? null : '/',
-        token: action.error ? null : action.payload.token,
         currentUser: action.error ? null : action.payload.user
       };
     case DELETE_ARTICLE:

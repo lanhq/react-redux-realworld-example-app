@@ -13,7 +13,7 @@ export default (state = {}, action) => {
     case EDITOR_PAGE_LOADED:
       return {
         ...state,
-        articleSlug: action.payload ? action.payload.article.slug : '',
+        id: action.payload ? action.payload.article.id : '',
         title: action.payload ? action.payload.article.title : '',
         description: action.payload ? action.payload.article.description : '',
         body: action.payload ? action.payload.article.body : '',

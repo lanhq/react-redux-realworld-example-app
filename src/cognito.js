@@ -1,35 +1,5 @@
 import AWS from "aws-sdk";
 import readline from 'readline';
-// import superagentPromise from 'superagent-promise';
-// import _superagent from 'superagent';
-
-// const superagent = superagentPromise(_superagent, global.Promise);
-
-
-// const requests = () => {
-//     const currentUser = userPool.getCurrentUser(),
-//         signInUserSession, API_ROOT, token;
-    
-//     const tokenPlugin = req => {
-//         if (token && false) {
-//             req.set('authorization', `Token ${token}`);
-//         }
-//     }
-    
-//     currentUser.getSession(function (err, session) {
-//         signInUserSession = err ? null : session;
-//     });
-//     return {
-//     del: url =>
-//       superagent.del(`${API_ROOT}${url}`).use(tokenPlugin).then(responseBody),
-//     get: url =>
-//       superagent.get(`${API_ROOT}${url}`).use(tokenPlugin).then(responseBody),
-//     put: (url, body) =>
-//       superagent.put(`${API_ROOT}${url}`, body).use(tokenPlugin).then(responseBody),
-//     post: (url, body) =>
-//       superagent.post(`${API_ROOT}${url}`, body).use(tokenPlugin).then(responseBody)
-//   }
-// };
 var AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 
 var userPool, cognitoUser, JwtToken;
@@ -103,6 +73,14 @@ function authenticateUser(email, password, callback) {
             JwtToken = result.getIdToken().getJwtToken();
             console.log('access token + ' + JwtToken);
             console.log('AuthenticationFlowType: ', cognitoUser.getAuthenticationFlowType());
+            AWS.config.region = 'us-east-1';
+            console.log('JwtToken: ', JwtToken);
+            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: 'us-east-1:7cbeb182-ba5e-481a-a48d-4b0a40f6d726',
+                Logins: {
+                    'cognito-idp.us-east-1.amazonaws.com/us-east-1_WhcCjjXKO': JwtToken
+                }
+            });
             callback.success(result);
         },
     

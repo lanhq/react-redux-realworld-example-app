@@ -2,20 +2,18 @@ import Banner from './Banner';
 import MainView from './MainView';
 import React from 'react';
 import Tags from './Tags';
-import agent from '../../agent';
 import { connect } from 'react-redux';
 import {
   HOME_PAGE_LOADED,
   HOME_PAGE_UNLOADED,
   APPLY_TAG_FILTER
 } from '../../constants/actionTypes';
-
-const Promise = global.Promise;
+import cognito from '../../cognito';
+import AWS from "aws-sdk";
 
 const mapStateToProps = state => ({
   ...state.home,
-  appName: state.common.appName,
-  token: state.common.token
+  appName: state.common.appName
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -29,12 +27,28 @@ const mapDispatchToProps = dispatch => ({
 
 class Home extends React.Component {
   componentWillMount() {
-    const tab = this.props.token && false? 'feed' : 'all';
-    const articlesPromise = this.props.token && false ?
-      agent.Articles.feed :
-      agent.Articles.all;
+    const tab = cognito.getCurrentUser() ? 'feed' : 'all';
+    // const articlesPromise = this.props.token && false ?
+    //   agent.Articles.feed :
+    //   agent.Articles.all;
+    var docClient = new AWS.DynamoDB.DocumentClient();
 
-    this.props.onLoad(tab, articlesPromise, Promise.all([agent.Tags.getAll(), articlesPromise()]));
+    var params = {
+        TableName: "Tags",
+        Key:{
+            "id": 1
+        }
+    };
+
+    docClient.get(params, function(err, data) {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            // console.log("GetItem succeeded:", JSON.stringify(data.Item.tags, null, 2));
+            this.props.onLoad(tab, null, {tags: data.Item.tags});
+        }
+    }.bind(this));
+
   }
 
   componentWillUnmount() {

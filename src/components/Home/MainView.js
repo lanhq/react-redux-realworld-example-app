@@ -1,15 +1,28 @@
 import ArticleList from '../ArticleList';
 import React from 'react';
-import agent from '../../agent';
 import { connect } from 'react-redux';
 import { CHANGE_TAB } from '../../constants/actionTypes';
+import AWS from "aws-sdk";
+import cognito from "../../cognito";
 
 const YourFeedTab = props => {
-  if (props.token) {
+  if (cognito.getCurrentUser()) {
     const clickHandler = ev => {
       ev.preventDefault();
+      const docClient = new AWS.DynamoDB.DocumentClient();
+      docClient.scan({
+          TableName : "Articles2"
+      }, function (err, data) {
+        if (err) {
+          console.error(err);
+        } else {
+          props.onTabClick('feed', null, {
+            articles: data.Items,
+            articlesCount: data.Items.length
+          });
+        }
+      })
       // props.onTabClick('feed', agent.Articles.feed, agent.Articles.feed());
-      props.onTabClick('feed', agent.Articles.all, agent.Articles.all());
     }
 
     return (
@@ -28,7 +41,16 @@ const YourFeedTab = props => {
 const GlobalFeedTab = props => {
   const clickHandler = ev => {
     ev.preventDefault();
-    props.onTabClick('all', agent.Articles.all, agent.Articles.all());
+    const docClient = new AWS.DynamoDB.DocumentClient();
+      docClient.scan({
+          TableName : "Articles2"
+      }, function (err, data) {
+        props.onTabClick('all', null, {
+          articles: data.Items,
+          articlesCount: data.Items.length
+        });
+      })
+    // props.onTabClick('all', agent.Articles.all, agent.Articles.all());
   };
   return (
     <li className="nav-item">
@@ -58,8 +80,7 @@ const TagFilterTab = props => {
 
 const mapStateToProps = state => ({
   ...state.articleList,
-  tags: state.home.tags,
-  token: state.common.token
+  tags: state.home.tags
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -73,7 +94,6 @@ const MainView = props => {
         <ul className="nav nav-pills outline-active">
 
           <YourFeedTab
-            token={props.token}
             tab={props.tab}
             onTabClick={props.onTabClick} />
 
